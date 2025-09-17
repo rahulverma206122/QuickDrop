@@ -76,7 +76,7 @@ export default function Home() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-4 md:py-12 max-w-4xl">
+    <div className="container mx-auto px-4 py-1 md:py-12 max-w-4xl">
       <header className="text-center mb-8">
         <h1 className="mt-40 md:mt-0 text-5xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-neutral-500 to-blue-700">QuickDrop</h1>
         <p className="text-xl text-gray-600">Secure P2P File Sharing</p>
