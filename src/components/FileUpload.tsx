@@ -5,22 +5,24 @@ import { useDropzone } from 'react-dropzone';
 import { FiUpload } from 'react-icons/fi';
 
 interface FileUploadProps {
-  onFileUpload: (file: File) => void;
+  onFileUpload: (files: File | File[]) => void;
   isUploading: boolean;
 }
 
 export default function FileUpload({ onFileUpload, isUploading }: FileUploadProps) {
   const [dragActive, setDragActive] = useState(false);
-  
+  const [selectedFilesCount, setSelectedFilesCount] = useState(0);
+
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
-      onFileUpload(acceptedFiles[0]);
+      onFileUpload(acceptedFiles);
+      setSelectedFilesCount(acceptedFiles.length);
     }
   }, [onFileUpload]);
-  
-  const { getRootProps, getInputProps } = useDropzone({ 
+
+  const { getRootProps, getInputProps } = useDropzone({
     onDrop,
-    multiple: false,
+    multiple: true,
     onDragEnter: () => setDragActive(true),
     onDragLeave: () => setDragActive(false),
     onDropAccepted: () => setDragActive(false),
@@ -28,25 +30,27 @@ export default function FileUpload({ onFileUpload, isUploading }: FileUploadProp
   });
 
   return (
-    <div 
-      {...getRootProps()} 
+    <div
+      {...getRootProps()}
       className={`
         w-full p-8 border-2 border-dashed rounded-lg text-center cursor-pointer transition-all
-        ${dragActive 
-          ? 'border-blue-500 bg-blue-50' 
+        ${dragActive
+          ? 'border-blue-500 bg-blue-50'
           : 'border-gray-300 hover:border-blue-500 hover:bg-gray-50'
         }
         ${isUploading ? 'opacity-50 pointer-events-none' : ''}
       `}
     >
-      <input {...getInputProps()} />
+      <input {...getInputProps()} multiple />
       <div className="flex flex-col items-center justify-center space-y-3">
         <div className="p-3 bg-blue-100 rounded-full">
           <FiUpload className="w-9 h-9 text-blue-500" />
         </div>
-        <p className="text-lg font-medium text-blue-500">Drag & drop a file here, or click to select</p>
+        <p className="text-lg font-medium text-blue-500">
+         Drag & drop files here, or click to select (multiple files supported)
+        </p>
         <p className="text-sm text-gray-500">
-          Share any file with your peers securely
+          Share one or more files with your peers securely
         </p>
       </div>
     </div>

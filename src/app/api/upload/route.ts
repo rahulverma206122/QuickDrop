@@ -1,21 +1,27 @@
-
 import { NextRequest, NextResponse } from "next/server";
-import { saveFile } from "@/utils/fileHelper"; // saves to disk & returns inviteCode
+import { saveFiles } from "@/utils/fileHelper"; // updated helper
 
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
-    const file = formData.get("file");
+    const files = formData.getAll("file");
 
-    if (!file || !(file instanceof File)) {
-      return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+    // Filter and validate files
+    const validFiles = files.filter(f => f instanceof File) as File[];
+    if (validFiles.length === 0) {
+      return NextResponse.json({ error: "No files uploaded" }, { status: 400 });
     }
 
-    // Convert browser File to Node.js Buffer
-    const buffer = Buffer.from(await file.arrayBuffer());
+    // Convert browser File objects to Node.js Buffers
+    const fileBuffers = await Promise.all(
+      validFiles.map(async (file) => ({
+        buffer: Buffer.from(await file.arrayBuffer()),
+        originalName: file.name,
+      }))
+    );
 
-    // saveFile returns the 6-character invite code
-    const inviteCode = saveFile(buffer, file.name);
+    // saveFiles returns a single invite code for all files
+    const inviteCode = saveFiles(fileBuffers);
 
     return NextResponse.json({ inviteCode });
   } catch (err) {
@@ -23,4 +29,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 }
-

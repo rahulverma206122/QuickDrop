@@ -7,27 +7,28 @@ import InviteCode from '@/components/InviteCode';
 import axios from 'axios';
 
 export default function Home() {
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'upload' | 'download'>('upload');
 
   // Upload
-  const handleFileUpload = async (file: File) => {
-    setUploadedFile(file);
+  const handleFileUpload = async (files: File | File[]) => {
     setIsUploading(true);
     setInviteCode(null);
 
+    const newFiles = Array.isArray(files) ? files : [files];
+    setUploadedFiles(prev => [...prev, ...newFiles]); // keep previous + new files
+
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      [...uploadedFiles, ...newFiles].forEach(file => formData.append('file', file));
 
       const response = await axios.post('/api/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      // Corrected here: backend returns `inviteCode`
       setInviteCode(response.data.inviteCode);
     } catch (err) {
       console.error('Upload error:', err);
@@ -35,6 +36,11 @@ export default function Home() {
     } finally {
       setIsUploading(false);
     }
+  };
+
+  // Remove a single file before upload
+  const removeFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   // Download
@@ -86,7 +92,7 @@ export default function Home() {
             }`}
             onClick={() => setActiveTab('upload')}
           >
-            Share a File
+            Share Files
           </button>
           <button
             className={`px-4 py-2 font-medium ${
@@ -104,18 +110,29 @@ export default function Home() {
           <div>
             <FileUpload onFileUpload={handleFileUpload} isUploading={isUploading} />
 
-            {uploadedFile && !isUploading && (
-              <div className="mt-4 p-3 bg-gray-50 rounded-md">
-                <p className="text-sm text-gray-600">
-                  Selected file: <span className="font-medium">{uploadedFile.name}</span> ({Math.round(uploadedFile.size / 1024)} KB)
-                </p>
+            {/* Selected files list */}
+            {uploadedFiles.length > 0 && !isUploading && (
+              <div className="mt-4 p-3 bg-gray-50 rounded-md space-y-2">
+                {uploadedFiles.map((file, idx) => (
+                  <div key={idx} className="flex justify-between items-center text-sm text-gray-600">
+                    <span>
+                      {file.name} ({Math.round(file.size / 1024)} KB)
+                    </span>
+                    <button
+                      onClick={() => removeFile(idx)}
+                      className="text-red-500 hover:text-red-700 text-xs font-medium"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
 
             {isUploading && (
               <div className="mt-6 text-center">
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
-                <p className="mt-2 text-gray-600">Uploading file...</p>
+                <p className="mt-2 text-gray-600">Uploading files...</p>
               </div>
             )}
 

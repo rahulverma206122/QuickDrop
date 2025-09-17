@@ -3,22 +3,22 @@ import path from "path";
 
 const FILE_MAP_PATH = path.join(process.cwd(), "uploads", "fileMap.json");
 
-// Function to load map from disk
-function loadMapFromDisk(): Map<string, string> {
+// Load map from disk
+function loadMapFromDisk(): Map<string, string[]> {
   if (fs.existsSync(FILE_MAP_PATH)) {
     try {
       const data = fs.readFileSync(FILE_MAP_PATH, "utf-8");
-      const parsed = JSON.parse(data) as [string, string][];
-      return new Map<string, string>(parsed);
+      const parsed = JSON.parse(data) as [string, string[]][];
+      return new Map<string, string[]>(parsed);
     } catch (error) {
-      return new Map<string, string>();
+      return new Map<string, string[]>();
     }
   }
-  return new Map<string, string>();
+  return new Map<string, string[]>();
 }
 
-// Function to save map to disk
-function saveMapToDisk(fileMap: Map<string, string>) {
+// Save map to disk
+function saveMapToDisk(fileMap: Map<string, string[]>) {
   try {
     const uploadsDir = path.dirname(FILE_MAP_PATH);
     if (!fs.existsSync(uploadsDir)) {
@@ -30,13 +30,17 @@ function saveMapToDisk(fileMap: Map<string, string>) {
   }
 }
 
-export function addFile(code: string, fileName: string) {
+// Add file(s) to a code
+export function addFile(code: string, fileNames: string | string[]) {
   const fileMap = loadMapFromDisk();
-  fileMap.set(code, fileName);
+  const existingFiles = fileMap.get(code) || [];
+  const newFiles = Array.isArray(fileNames) ? fileNames : [fileNames];
+  fileMap.set(code, [...existingFiles, ...newFiles]);
   saveMapToDisk(fileMap);
 }
 
-export function getFile(code: string): string | null {
+// Get all files for a code
+export function getFile(code: string): string[] {
   const fileMap = loadMapFromDisk();
-  return fileMap.get(code) || null;
+  return fileMap.get(code) || [];
 }

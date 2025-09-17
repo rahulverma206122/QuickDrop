@@ -16,22 +16,28 @@ export function ensureUploadsDir() {
 }
 
 /**
- * Saves a file buffer to disk, generates a 6-char invite code,
+ * Saves multiple file buffers to disk, generates a single invite code,
  * stores mapping, and returns the invite code
  */
-export function saveFile(fileBuffer: Buffer, originalName: string): string {
+export function saveFiles(
+  files: { buffer: Buffer; originalName: string }[]
+): string {
   ensureUploadsDir();
 
-  const uniqueFilename = `${uuidv4()}_${originalName}`;
-  const filePath = path.join(UPLOADS_DIR, uniqueFilename);
+  const savedFilenames: string[] = [];
 
-  fs.writeFileSync(filePath, fileBuffer);
+  for (const file of files) {
+    const uniqueFilename = `${uuidv4()}_${file.originalName}`;
+    const filePath = path.join(UPLOADS_DIR, uniqueFilename);
+    fs.writeFileSync(filePath, file.buffer);
+    savedFilenames.push(uniqueFilename);
+  }
 
   // Generate a 4-character invite code
   const inviteCode = Math.floor(1000 + Math.random() * 9000).toString();
 
-  // Persist mapping
-  addFile(inviteCode, uniqueFilename);
+  // Persist mapping (multiple files under the same code)
+  addFile(inviteCode, savedFilenames);
 
   return inviteCode;
 }
