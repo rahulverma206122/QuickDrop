@@ -77,7 +77,7 @@ export default function Home() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <header className="text-center mb-12">
+      <header className="text-center mb-8">
         <h1 className="mt-40 md:mt-0 text-3xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-neutral-500 to-blue-700">QuickDrop</h1>
         <p className="text-xl text-gray-600">Secure P2P File Sharing</p>
       </header>
@@ -147,7 +147,7 @@ export default function Home() {
         )}
       </div>
 
-      <footer className="mt-12 text-center text-gray-500 text-sm">
+      <footer className="mt-8 text-center text-gray-500 text-sm">
         <p>QuickDrop &copy; {new Date().getFullYear()} - Secure P2P File Sharing</p>
       </footer>
     </div>
