@@ -1,46 +1,77 @@
-import fs from "fs";
-import path from "path";
+// src/lib/fileStore.ts
 
-const FILE_MAP_PATH = path.join(process.cwd(), "uploads", "fileMap.json");
+import fs from 'fs';
+import path from 'path';
+import { v4 as uuidv4 } from 'uuid';
 
-// Load map from disk
-function loadMapFromDisk(): Map<string, string[]> {
-  if (fs.existsSync(FILE_MAP_PATH)) {
-    try {
-      const data = fs.readFileSync(FILE_MAP_PATH, "utf-8");
-      const parsed = JSON.parse(data) as [string, string[]][];
-      return new Map<string, string[]>(parsed);
-    } catch (error) {
-      return new Map<string, string[]>();
-    }
+// ── Constants ──────────────────────────────────────────
+const UPLOADS_DIR = path.join(process.cwd(), 'uploads');
+const FILE_MAP_PATH = path.join(UPLOADS_DIR, 'fileMap.json');
+
+// ── Directory Setup ────────────────────────────────────
+function ensureUploadsDir() {
+  if (!fs.existsSync(UPLOADS_DIR)) {
+    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
   }
-  return new Map<string, string[]>();
 }
 
-// Save map to disk
-function saveMapToDisk(fileMap: Map<string, string[]>) {
+// ── File Map (code → filenames) ────────────────────────
+
+// string | string[] handles both old and new format entries
+function loadMap(): Map<string, string | string[]> {
+  if (!fs.existsSync(FILE_MAP_PATH)) return new Map();
+
   try {
-    const uploadsDir = path.dirname(FILE_MAP_PATH);
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
-    }
-    fs.writeFileSync(FILE_MAP_PATH, JSON.stringify([...fileMap]), "utf-8");
-  } catch (error) {
-    // optionally handle error
+    const data = fs.readFileSync(FILE_MAP_PATH, 'utf-8');
+    const parsed = JSON.parse(data) as [string, string | string[]][];
+    return new Map(parsed);
+  } catch {
+    return new Map();
   }
 }
 
-// Add file(s) to a code
-export function addFile(code: string, fileNames: string | string[]) {
-  const fileMap = loadMapFromDisk();
-  const existingFiles = fileMap.get(code) || [];
-  const newFiles = Array.isArray(fileNames) ? fileNames : [fileNames];
-  fileMap.set(code, [...existingFiles, ...newFiles]);
-  saveMapToDisk(fileMap);
+function saveMap(fileMap: Map<string, string | string[]>) {
+  try {
+    ensureUploadsDir();
+    fs.writeFileSync(FILE_MAP_PATH, JSON.stringify([...fileMap]), 'utf-8');
+  } catch (err) {
+    console.error('Failed to save file map:', err);
+  }
 }
 
-// Get all files for a code
+// ── Public API ─────────────────────────────────────────
+
+/** Save files to disk, generate an invite code, persist mapping */
+export function saveFiles(
+  files: { buffer: Buffer; originalName: string }[]
+): string {
+  ensureUploadsDir();
+
+  // Save each file with a unique name (uuid + original name)
+  const savedFilenames = files.map((file) => {
+    const uniqueName = `${uuidv4()}_${file.originalName}`;
+    fs.writeFileSync(path.join(UPLOADS_DIR, uniqueName), file.buffer);
+    return uniqueName;
+  });
+
+  // Generate a 4-digit invite code and store mapping
+  const inviteCode = Math.floor(1000 + Math.random() * 9000).toString();
+  const fileMap = loadMap();
+  fileMap.set(inviteCode, savedFilenames);
+  saveMap(fileMap);
+
+  return inviteCode;
+}
+
+/** Get all filenames associated with an invite code */
 export function getFile(code: string): string[] {
-  const fileMap = loadMapFromDisk();
-  return fileMap.get(code) || [];
+  const fileMap = loadMap();
+  const result = fileMap.get(code);
+
+  if (!result) return [];
+
+  // Handle old format where value was saved as a plain string
+  if (typeof result === 'string') return [result];
+
+  return result;
 }

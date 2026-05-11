@@ -1,16 +1,15 @@
+// src/components/InviteCode.tsx
 'use client';
 
 import { useState } from 'react';
 import { FiCopy, FiCheck } from 'react-icons/fi';
 
-interface InviteCodeProps {
-  code: string | null;
+interface Props {
+  code: string;
 }
 
-export default function InviteCode({ code }: InviteCodeProps) {
+export default function InviteCode({ code }: Props) {
   const [copied, setCopied] = useState(false);
-
-  if (!code) return null;
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(code);
@@ -20,11 +19,16 @@ export default function InviteCode({ code }: InviteCodeProps) {
 
   return (
     <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-      <h3 className="text-lg font-medium text-green-800">File Ready to Share!</h3>
+      <h3 className="text-lg font-medium text-green-800">
+        File Ready to Share!
+      </h3>
+
       <p className="text-sm text-green-600 mb-3">
-        Share this invite code with anyone you want to access these files:You can upload more files before sharing this code
+        Share this invite code with anyone you want to give access to.
+        You can upload more files before sharing this code.
       </p>
 
+      {/* Code + Copy button */}
       <div className="flex items-center">
         <div className="flex-1 bg-white p-3 rounded-l-md border border-r-0 border-gray-300 font-mono text-lg text-black">
           {code}
@@ -34,12 +38,15 @@ export default function InviteCode({ code }: InviteCodeProps) {
           className="p-3 bg-blue-500 hover:bg-blue-700 text-white rounded-r-md transition-colors"
           aria-label="Copy invite code"
         >
-          {copied ? <FiCheck className="w-6 h-6" /> : <FiCopy className="w-7 h-7" />}
+          {copied
+            ? <FiCheck className="w-6 h-6" />
+            : <FiCopy className="w-6 h-6" />
+          }
         </button>
       </div>
 
       <p className="mt-3 text-xs text-gray-500">
-        This code will be valid as long as your file sharing session is active.
+        This code is valid as long as the server is running.
       </p>
     </div>
   );
